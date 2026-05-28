@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Standup Writer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0f1117;
+    color: #e1e4e8;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 16px;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: #f0f6fc;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-size: 0.82rem;
+    color: #6e7681;
+    margin-bottom: 32px;
+  }
+
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 28px;
+    width: 100%;
+    max-width: 560px;
+    margin-bottom: 20px;
+  }
+
+  .field-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #8b949e;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .field-label .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .dot-green  { background: #3fb950; }
+  .dot-blue   { background: #388bfd; }
+  .dot-red    { background: #f85149; }
+
+  textarea {
+    width: 100%;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    color: #e1e4e8;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    padding: 12px 14px;
+    resize: vertical;
+    min-height: 72px;
+    transition: border-color 0.15s;
+    font-family: inherit;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: #388bfd;
+  }
+
+  textarea::placeholder { color: #484f58; }
+
+  .field { margin-bottom: 20px; }
+  .field:last-child { margin-bottom: 0; }
+
+  .format-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .format-btn {
+    font-size: 0.75rem;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+    background: #21262d;
+    color: #8b949e;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .format-btn:hover { border-color: #6e7681; color: #e1e4e8; }
+  .format-btn.active {
+    background: #388bfd22;
+    border-color: #388bfd;
+    color: #388bfd;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    flex: 1;
+  }
+
+  .btn-primary {
+    background: #238636;
+    color: #fff;
+  }
+  .btn-primary:hover { background: #2ea043; }
+
+  .btn-secondary {
+    background: #21262d;
+    color: #e1e4e8;
+    border: 1px solid #30363d;
+  }
+  .btn-secondary:hover { background: #30363d; }
+
+  .output-card {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 28px;
+    width: 100%;
+    max-width: 560px;
+    margin-bottom: 20px;
+    display: none;
+  }
+
+  .output-card.visible { display: block; }
+
+  .output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .output-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #8b949e;
+  }
+
+  .copy-btn {
+    font-size: 0.78rem;
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+    background: #21262d;
+    color: #8b949e;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .copy-btn:hover { border-color: #6e7681; color: #e1e4e8; }
+  .copy-btn.copied { border-color: #3fb950; color: #3fb950; }
+
+  .output-text {
+    font-size: 0.88rem;
+    line-height: 1.8;
+    color: #c9d1d9;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* History */
+  .history-card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 20px 28px;
+    width: 100%;
+    max-width: 560px;
+  }
+
+  .history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .history-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #8b949e;
+  }
+
+  .clear-btn {
+    font-size: 0.72rem;
+    color: #6e7681;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+  }
+  .clear-btn:hover { color: #f85149; }
+
+  .history-empty {
+    font-size: 0.82rem;
+    color: #484f58;
+    text-align: center;
+    padding: 16px 0;
+  }
+
+  .history-item {
+    border-top: 1px solid #21262d;
+    padding: 12px 0;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .history-item:first-child { border-top: none; }
+  .history-item:hover { opacity: 0.75; }
+
+  .history-date {
+    font-size: 0.72rem;
+    color: #6e7681;
+    margin-bottom: 4px;
+  }
+
+  .history-preview {
+    font-size: 0.83rem;
+    color: #8b949e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #3fb950;
+    color: #0d1117;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    transition: transform 0.25s ease;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<h1>Daily Standup Writer</h1>
+<p class="subtitle">오늘의 스탠드업 메시지를 빠르게 작성하세요</p>
+
+<!-- Input Card -->
+<div class="card">
+  <div class="format-row" id="formatBtns">
+    <button class="format-btn active" data-fmt="slack">Slack</button>
+    <button class="format-btn" data-fmt="notion">Notion</button>
+    <button class="format-btn" data-fmt="plain">Plain Text</button>
+  </div>
+
+  <div class="field">
+    <div class="field-label"><span class="dot dot-green"></span>어제 한 일</div>
+    <textarea id="yesterday" placeholder="예: API 인증 모듈 구현 완료, PR #42 리뷰" rows="3"></textarea>
+  </div>
+
+  <div class="field">
+    <div class="field-label"><span class="dot dot-blue"></span>오늘 할 일</div>
+    <textarea id="today" placeholder="예: 유닛 테스트 작성, 배포 파이프라인 설정" rows="3"></textarea>
+  </div>
+
+  <div class="field">
+    <div class="field-label"><span class="dot dot-red"></span>블로커 / 이슈</div>
+    <textarea id="blockers" placeholder="없으면 비워두세요" rows="2"></textarea>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-secondary" onclick="clearForm()">초기화</button>
+    <button class="btn btn-primary" onclick="generate()">메시지 생성</button>
+  </div>
+</div>
+
+<!-- Output Card -->
+<div class="output-card" id="outputCard">
+  <div class="output-header">
+    <span class="output-title">생성된 메시지</span>
+    <button class="copy-btn" id="copyBtn" onclick="copyOutput()">복사</button>
+  </div>
+  <pre class="output-text" id="outputText"></pre>
+</div>
+
+<!-- History Card -->
+<div class="history-card">
+  <div class="history-header">
+    <span class="history-title">최근 기록</span>
+    <button class="clear-btn" onclick="clearHistory()">전체 삭제</button>
+  </div>
+  <div id="historyList"></div>
+</div>
+
+<div class="toast" id="toast">클립보드에 복사됐어요!</div>
+
+<script>
+  const STORAGE_KEY = 'standup_history';
+  let currentFmt = 'slack';
+
+  // Format buttons
+  document.querySelectorAll('.format-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentFmt = btn.dataset.fmt;
+    });
+  });
+
+  function buildMessage(yesterday, today, blockers, fmt) {
+    const date = new Date().toLocaleDateString('ko-KR', {
+      year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
+    });
+
+    const noBlockers = !blockers.trim();
+
+    if (fmt === 'slack') {
+      let msg = `*[스탠드업 - ${date}]*\n\n`;
+      msg += `✅ *어제 한 일*\n${bulletize(yesterday)}\n`;
+      msg += `🔵 *오늘 할 일*\n${bulletize(today)}`;
+      if (!noBlockers) msg += `\n🔴 *블로커*\n${bulletize(blockers)}`;
+      return msg;
+    }
+
+    if (fmt === 'notion') {
+      let msg = `## 스탠드업 — ${date}\n\n`;
+      msg += `### ✅ 어제 한 일\n${bulletize(yesterday, '- ')}\n`;
+      msg += `### 🔵 오늘 할 일\n${bulletize(today, '- ')}`;
+      if (!noBlockers) msg += `\n### 🔴 블로커\n${bulletize(blockers, '- ')}`;
+      return msg;
+    }
+
+    // plain
+    let msg = `[스탠드업 - ${date}]\n\n`;
+    msg += `어제 한 일:\n${bulletize(yesterday, '- ')}\n`;
+    msg += `오늘 할 일:\n${bulletize(today, '- ')}`;
+    if (!noBlockers) msg += `\n블로커:\n${bulletize(blockers, '- ')}`;
+    return msg;
+  }
+
+  function bulletize(text, prefix = '• ') {
+    return text.trim().split('\n')
+      .map(l => l.trim()).filter(Boolean)
+      .map(l => (l.startsWith('-') || l.startsWith('•') ? l : prefix + l))
+      .join('\n') + '\n';
+  }
+
+  function generate() {
+    const y = document.getElementById('yesterday').value.trim();
+    const t = document.getElementById('today').value.trim();
+    const b = document.getElementById('blockers').value.trim();
+
+    if (!y && !t) {
+      shakeCard();
+      return;
+    }
+
+    const msg = buildMessage(y || '(없음)', t || '(없음)', b, currentFmt);
+    document.getElementById('outputText').textContent = msg;
+    document.getElementById('outputCard').classList.add('visible');
+    document.getElementById('copyBtn').textContent = '복사';
+    document.getElementById('copyBtn').classList.remove('copied');
+
+    saveHistory({ yesterday: y, today: t, blockers: b, fmt: currentFmt, message: msg });
+    renderHistory();
+  }
+
+  function copyOutput() {
+    const text = document.getElementById('outputText').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = '✓ 복사됨';
+      btn.classList.add('copied');
+      showToast();
+    });
+  }
+
+  function clearForm() {
+    ['yesterday', 'today', 'blockers'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('outputCard').classList.remove('visible');
+  }
+
+  function shakeCard() {
+    const card = document.querySelector('.card');
+    card.style.animation = 'none';
+    card.style.border = '1px solid #f85149';
+    setTimeout(() => { card.style.border = '1px solid #30363d'; }, 800);
+  }
+
+  // History
+  function loadHistory() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function saveHistory(entry) {
+    const history = loadHistory();
+    history.unshift({ ...entry, ts: Date.now() });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(0, 20)));
+  }
+
+  function clearHistory() {
+    localStorage.removeItem(STORAGE_KEY);
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const history = loadHistory();
+    const el = document.getElementById('historyList');
+
+    if (!history.length) {
+      el.innerHTML = '<div class="history-empty">아직 기록이 없어요</div>';
+      return;
+    }
+
+    el.innerHTML = history.map((h, i) => {
+      const d = new Date(h.ts);
+      const dateStr = d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' }) +
+                      ' ' + d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+      const preview = (h.today || h.yesterday || '').split('\n')[0];
+      return `<div class="history-item" onclick="restoreEntry(${i})">
+        <div class="history-date">${dateStr} · ${h.fmt}</div>
+        <div class="history-preview">${escapeHtml(preview)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function restoreEntry(i) {
+    const history = loadHistory();
+    const h = history[i];
+    document.getElementById('yesterday').value = h.yesterday || '';
+    document.getElementById('today').value = h.today || '';
+    document.getElementById('blockers').value = h.blockers || '';
+
+    // Set format
+    currentFmt = h.fmt || 'slack';
+    document.querySelectorAll('.format-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.fmt === currentFmt);
+    });
+
+    document.getElementById('outputText').textContent = h.message;
+    document.getElementById('outputCard').classList.add('visible');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function showToast() {
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  // Init
+  renderHistory();
+</script>
+</body>
+</html>
